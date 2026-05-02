@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+import requests
 
 app = FastAPI()
 
@@ -15,6 +16,20 @@ app.add_middleware(
 class RequestData(BaseModel):
     task: str
 
+def ask_llm(prompt: str):
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={
+            "model": "tinyllama",
+            "prompt": prompt,
+            "stream": False
+        }
+    )
+    return response.json().get("response", "")
+
 @app.post("/run")
 async def run(req: RequestData):
-    return {"message": f"You said: {req.task}"}
+    prompt = req.task
+    answer = ask_llm(prompt)
+
+    return {"message": answer}
