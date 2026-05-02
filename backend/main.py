@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import requests
-import json
 
 app = FastAPI()
 
@@ -15,24 +14,17 @@ app.add_middleware(
 )
 
 class RequestData(BaseModel):
-    task: str
+    code: str
 
-def build_prompt(task: str):
+def build_prompt(code: str):
     return f"""
-You are a code generator.
+Explain what this code does in simple terms.
+Explain code in 1–2 sentences.
+No extra commentary.
+No advice.
 
-You MUST respond with valid JSON ONLY.
-No markdown.
-No explanations.
-No extra text.
-
-{{
-  "code": "python code here",
-  "explanation": "short explanation"
-}}
-
-Task:
-{task}
+Code:
+{code}
 """
 
 def ask_llm(prompt: str):
@@ -44,24 +36,13 @@ def ask_llm(prompt: str):
             "stream": False
         }
     )
-    raw = response.json().get("response", "")
-    print("RAW LLM OUTPUT:", raw) 
-
-    return raw
-
-def parse_output(raw: str):
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        return {
-            "code": "",
-            "explanation": "Failed to parse model output"
-        }
+    return response.json().get("response", "")
 
 @app.post("/run")
 async def run(req: RequestData):
-    prompt = build_prompt(req.task)
-    raw = ask_llm(prompt)
-    parsed = parse_output(raw)
+    prompt = build_prompt(req.code)
+    result = ask_llm(prompt)
 
-    return parsed
+    return {
+        "explanation": result
+    }
