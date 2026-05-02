@@ -14,7 +14,8 @@ export default function App() {
     });
 
     const data = await res.json();
-    setResponse(data.message);
+    console.log(data);
+    setResponse(`CODE:\n${data.code}\n\nEXPLANATION:\n${data.explanation}`);
   };
 
   return (

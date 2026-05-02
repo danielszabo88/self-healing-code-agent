@@ -19,7 +19,12 @@ class RequestData(BaseModel):
 
 def build_prompt(task: str):
     return f"""
-Return ONLY valid JSON:
+You are a code generator.
+
+You MUST respond with valid JSON ONLY.
+No markdown.
+No explanations.
+No extra text.
 
 {{
   "code": "python code here",
