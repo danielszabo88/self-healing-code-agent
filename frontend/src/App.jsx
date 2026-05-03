@@ -2,24 +2,41 @@ import { useState } from "react";
 
 export default function App() {
   const [code, setCode] = useState("");
-  const [response, setResponse] = useState("");
+  const [explanation, setExplanation] = useState("");
+  const [output, setOutput] = useState("");
+  const [finalCode, setFinalCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const send = async () => {
     setLoading(true);
-    setResponse("");
+    setExplanation("");
+    setOutput("");
+    setFinalCode("");
+    setError("");
 
-    const res = await fetch("http://127.0.0.1:8000/run", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ code }),
-    });
+    try {
+      const res = await fetch("http://127.0.0.1:8000/run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    setResponse(data.explanation);
+      setExplanation(data.explanation || "");
+      setOutput(data.output || "");
+      setFinalCode(data.final_code || "");
+
+      if (data.error) {
+        setError(data.error);
+      }
+    } catch (err) {
+      setError("Backend request failed ", err);
+    }
+
     setLoading(false);
   };
 
@@ -48,13 +65,23 @@ export default function App() {
         <div style={styles.panel}>
           <h3>Explanation</h3>
 
-          {loading ? (
-            <p>Thinking...</p>
-          ) : (
-            <pre style={styles.output}>
-              {response || "Your explanation will appear here..."}
-            </pre>
+          <pre style={styles.output}>
+            {loading ? "Thinking..." : explanation || "No explanation yet"}
+          </pre>
+
+          {error && (
+            <pre style={{ ...styles.output, color: "red" }}>{error}</pre>
           )}
+
+          <h3 style={{ marginTop: 20 }}>Execution Output</h3>
+          <pre style={styles.output}>
+            {loading ? "Running..." : output || "No output yet"}
+          </pre>
+
+          <h3 style={{ marginTop: 20 }}>Final Code</h3>
+          <pre style={styles.output}>
+            {loading ? "Processing..." : finalCode || "No fixed code yet"}
+          </pre>
         </div>
       </div>
     </div>
